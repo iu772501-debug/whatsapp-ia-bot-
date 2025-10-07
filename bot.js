@@ -4,7 +4,7 @@ import pkg from "whatsapp-web.js";
 const { Client, LocalAuth } = pkg;
 
 import fetch from "node-fetch";
-import QRCode from "qrcode"; // usamos qrcode para imagen
+import QRCode from "qrcode";
 import fs from "fs";
 
 const API_KEY = process.env.DEEPSEEK_API_KEY;
@@ -14,14 +14,20 @@ const client = new Client({
   authStrategy: new LocalAuth({ clientId: "bot-ia" }), // mantiene sesión separada
 });
 
-client.on("qr", async qr => {
-  console.log("📲 Se generó un QR, guardando como qrcode.png ...");
+// Tu número de WhatsApp para enviar el QR
+const MY_NUMBER = "59176997283@c.us";
 
+client.on("qr", async qr => {
   try {
-    await QRCode.toFile('qrcode.png', qr, { width: 200 }); // tamaño cómodo
-    console.log("✅ QR guardado en qrcode.png. Descárgalo y escanéalo con tu WhatsApp.");
+    // Guardar QR como imagen
+    await QRCode.toFile('qrcode.png', qr, { width: 200 });
+    console.log("✅ QR guardado como qrcode.png");
+
+    // Enviar QR a tu WhatsApp
+    await client.sendMessage(MY_NUMBER, fs.readFileSync("qrcode.png"), { caption: "Tu QR para iniciar sesión" });
+    console.log("✅ QR enviado a tu WhatsApp");
   } catch (err) {
-    console.error("❌ Error generando QR:", err);
+    console.error("❌ Error generando o enviando QR:", err);
   }
 });
 
@@ -39,6 +45,7 @@ client.on("message", async message => {
   console.log(`💬 Mensaje recibido: ${message.body}`);
 
   try {
+    // Llamada a DeepSeek
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -72,4 +79,5 @@ client.on("message", async message => {
   }
 });
 
+// Inicializa el bot
 client.initialize();
