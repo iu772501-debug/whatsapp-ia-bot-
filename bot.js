@@ -4,7 +4,8 @@ import pkg from "whatsapp-web.js";
 const { Client, LocalAuth } = pkg;
 
 import fetch from "node-fetch";
-import qrcode from "qrcode-terminal";
+import QRCode from "qrcode"; // usamos qrcode para imagen
+import fs from "fs";
 
 const API_KEY = process.env.DEEPSEEK_API_KEY;
 
@@ -13,9 +14,15 @@ const client = new Client({
   authStrategy: new LocalAuth({ clientId: "bot-ia" }), // mantiene sesión separada
 });
 
-client.on("qr", qr => {
-  console.log("📲 Escanea este QR con tu WhatsApp:");
-  qrcode.generate(qr, { small: true });
+client.on("qr", async qr => {
+  console.log("📲 Se generó un QR, guardando como qrcode.png ...");
+
+  try {
+    await QRCode.toFile('qrcode.png', qr, { width: 200 }); // tamaño cómodo
+    console.log("✅ QR guardado en qrcode.png. Descárgalo y escanéalo con tu WhatsApp.");
+  } catch (err) {
+    console.error("❌ Error generando QR:", err);
+  }
 });
 
 client.on("ready", () => {
@@ -66,4 +73,3 @@ client.on("message", async message => {
 });
 
 client.initialize();
-
