@@ -5,7 +5,6 @@ const { Client, LocalAuth } = pkg;
 
 import fetch from "node-fetch";
 import qrcode from "qrcode-terminal";
-import 'dotenv/config';
 
 const API_KEY = process.env.DEEPSEEK_API_KEY;
 
@@ -67,3 +66,4 @@ client.on("message", async message => {
 });
 
 client.initialize();
+
