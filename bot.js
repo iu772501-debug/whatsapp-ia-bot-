@@ -8,31 +8,41 @@ import QRCode from "qrcode";
 import fs from "fs";
 
 const API_KEY = process.env.DEEPSEEK_API_KEY;
+const MY_NUMBER = "59176997283@c.us";
 
-// Inicializa el cliente de WhatsApp
 const client = new Client({
-  authStrategy: new LocalAuth({ clientId: "bot-ia" }), // mantiene sesión separada
+  authStrategy: new LocalAuth({ clientId: "bot-ia" }),
 });
 
-// Tu número de WhatsApp para enviar el QR
-const MY_NUMBER = "59176997283@c.us";
+let clientReady = false;
+
+// Evento cuando el cliente está listo
+client.on("ready", () => {
+  console.log("✅ Bot conectado a WhatsApp y listo!");
+  clientReady = true;
+});
 
 client.on("qr", async qr => {
   try {
-    // Guardar QR como imagen
-    await QRCode.toFile('qrcode.png', qr, { width: 200 });
+    // Guardar QR como imagen nítida
+    await QRCode.toFile('qrcode.png', qr, { width: 300 });
     console.log("✅ QR guardado como qrcode.png");
 
-    // Enviar QR a tu WhatsApp
-    await client.sendMessage(MY_NUMBER, fs.readFileSync("qrcode.png"), { caption: "Tu QR para iniciar sesión" });
+    // Espera a que el cliente esté listo antes de enviar
+    const waitForReady = () =>
+      new Promise(resolve => {
+        if (clientReady) return resolve();
+        client.on("ready", () => resolve());
+      });
+
+    await waitForReady();
+
+    // Envía QR a tu WhatsApp
+    await client.sendMessage(MY_NUMBER, fs.readFileSync("qrcode.png"), { caption: "📲 Tu QR para iniciar sesión" });
     console.log("✅ QR enviado a tu WhatsApp");
   } catch (err) {
     console.error("❌ Error generando o enviando QR:", err);
   }
-});
-
-client.on("ready", () => {
-  console.log("✅ Bot conectado a WhatsApp y listo!");
 });
 
 let lastMessageTime = 0;
@@ -81,3 +91,4 @@ client.on("message", async message => {
 
 // Inicializa el bot
 client.initialize();
+
