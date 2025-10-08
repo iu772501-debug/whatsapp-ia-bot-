@@ -1,21 +1,28 @@
-// bot.js
-
 import pkg from "whatsapp-web.js";
 const { Client, LocalAuth } = pkg;
-
+import QRCode from "qrcode";
 import fetch from "node-fetch";
-import qrcode from "qrcode-terminal";
 
+// Tu API Key de DeepSeek desde variable de entorno
 const API_KEY = process.env.DEEPSEEK_API_KEY;
 
-// Inicializa el cliente de WhatsApp
 const client = new Client({
-  authStrategy: new LocalAuth({ clientId: "bot-ia" }), // mantiene sesión separada
+  authStrategy: new LocalAuth({ clientId: "bot-ia" }), // sesión persistente
 });
 
-client.on("qr", qr => {
-  console.log("📲 Escanea este QR con tu WhatsApp:");
-  qrcode.generate(qr, { small: true });
+client.on("qr", async qr => {
+  try {
+    // Genera QR nítido en consola y en PNG
+    console.log("📲 Escanea este QR con tu WhatsApp:");
+    QRCode.toString(qr, { type: 'terminal', small: false }, (err, url) => {
+      if (err) console.error("❌ Error QR consola:", err);
+      else console.log(url);
+    });
+    await QRCode.toFile('qrcode.png', qr, { width: 300 });
+    console.log("✅ QR también generado en qrcode.png");
+  } catch (err) {
+    console.error("❌ Error generando QR:", err);
+  }
 });
 
 client.on("ready", () => {
@@ -43,12 +50,9 @@ client.on("message", async message => {
         messages: [
           {
             role: "system",
-            content: "Eres el asistente con inteligencia artificial de Rodrigo. Representas a TechArt y respondes siempre en tono profesional, claro y útil."
+            content: "Eres el asistente con IA de Rodrigo. Representas a TechArt y respondes siempre en tono profesional, claro y útil."
           },
-          {
-            role: "user",
-            content: message.body
-          }
+          { role: "user", content: message.body }
         ]
       })
     });
@@ -60,7 +64,7 @@ client.on("message", async message => {
     console.log("🤖 Respondí:", reply);
 
   } catch (error) {
-    console.error("❌ Error al procesar el mensaje:", error);
+    console.error("❌ Error al procesar mensaje:", error);
     await message.reply("Lo siento, hubo un error al procesar tu mensaje.");
   }
 });
